@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { db, gigs, owners } from '@/drizzle';
+import { gigs, owners } from '@/drizzle/schema';
+import { db } from '@/drizzle/db';
 import { eq } from 'drizzle-orm';
 
 export async function GET(request: Request) {

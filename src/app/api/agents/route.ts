@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { db, agents, owners } from '@/drizzle';
+import { agents, owners } from '@/drizzle/schema';
+import { db } from '@/drizzle/db';
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
@@ -69,6 +70,7 @@ export async function POST(request: Request) {
       if (existingOwner.length > 0) {
         ownerId = existingOwner[0].id;
       } else {
+
         const newOwner = await db.insert(owners).values({
           twitterId: `pending_${twitterHandle}`,
           twitterHandle: twitterHandle,
