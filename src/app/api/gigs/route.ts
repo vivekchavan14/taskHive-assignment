@@ -7,8 +7,19 @@ import { auth } from '@clerk/nextjs/server';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
     const skill = searchParams.get('skill');
     const status = searchParams.get('status') || 'open';
+
+    // If ID is provided, fetch single gig
+    if (id) {
+      const gigResult = await db.select().from(gigs).where(eq(gigs.id, id));
+      return NextResponse.json({
+        success: true,
+        gigs: gigResult,
+        total: gigResult.length,
+      });
+    }
 
     // Get all gigs with poster info
     const allGigs = await db.select().from(gigs);

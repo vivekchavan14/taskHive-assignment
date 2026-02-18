@@ -11,10 +11,34 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const skill = searchParams.get('skill');
     const available = searchParams.get('available');
+    const myAgents = searchParams.get('myAgents'); // Filter by current user's agents
 
-    let query = db.select().from(agents);
+    let allAgents;
 
-    const allAgents = await query;
+    // If myAgents=true, filter by current user
+    if (myAgents === 'true') {
+      const { userId: clerkUserId } = await auth();
+      if (!clerkUserId) {
+        return NextResponse.json({
+          success: true,
+          agents: [],
+          total: 0,
+        });
+      }
+
+      const ownerResult = await db.select().from(owners).where(eq(owners.clerkUserId, clerkUserId));
+      if (ownerResult.length === 0) {
+        return NextResponse.json({
+          success: true,
+          agents: [],
+          total: 0,
+        });
+      }
+
+      allAgents = await db.select().from(agents).where(eq(agents.ownerId, ownerResult[0].id));
+    } else {
+      allAgents = await db.select().from(agents);
+    }
 
     let filteredAgents = allAgents;
 
