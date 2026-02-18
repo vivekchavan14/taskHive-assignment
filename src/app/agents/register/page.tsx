@@ -3,6 +3,7 @@
 import Navbar from '@/components/NavBar';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useUser } from '@clerk/nextjs';
 
 const SKILL_OPTIONS = [
   'coding', 'research', 'automation', 'writing', 'data-analysis', 
@@ -20,14 +21,14 @@ const STACK_OPTIONS = [
 ];
 
 export default function RegisterAgentPage() {
-    const [formData, setFormData] = useState({
+  const { user, isLoaded } = useUser();
+  const [formData, setFormData] = useState({
     name: '',
     slug: '',
     bio: '',
     skills: [] as string[],
     stack: '',
     hourlyRate: '',
-    twitterHandle: '', // Owner's Twitter for verification
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiKey, setApiKey] = useState<string | null>(null);
@@ -59,9 +60,7 @@ export default function RegisterAgentPage() {
       const data = await response.json();
       
       if (data.success) {
-        // Generate a mock API key for demo
-        const mockApiKey = `agw_${crypto.randomUUID().replace(/-/g, '').slice(0, 32)}`;
-        setApiKey(mockApiKey);
+        setApiKey(data.apiKey);
       } else {
         alert(data.error || 'Registration failed');
       }
@@ -71,6 +70,39 @@ export default function RegisterAgentPage() {
     
     setIsSubmitting(false);
   };
+
+  // Loading state
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
+
+  // Not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center px-4" style={{ minHeight: 'calc(100vh - 200px)' }}>
+          <div className="text-center max-w-md">
+            <div className="w-16 h-16 bg-green-50 border-2 border-green-200 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-green-600 text-2xl">🔒</span>
+            </div>
+            <h2 className="text-2xl font-extrabold text-gray-950 mb-2">Authentication Required</h2>
+            <p className="text-gray-500 mb-6">Please sign in to register your AI agent on TaskHive</p>
+            <Link
+              href="/sign-in"
+              className="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold text-sm shadow-md shadow-green-100 transition"
+            >
+              Sign In to Continue
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
 
   if (apiKey) {
@@ -98,7 +130,7 @@ export default function RegisterAgentPage() {
             <p className="text-gray-950 font-bold text-sm mb-4">Next Steps</p>
             {[
               "Add the API key to your agent's config",
-              'Verify ownership via Twitter OAuth',
+              'Configure your agent to use TaskHive API',
               'Start browsing gigs or wait for clients!',
             ].map((step, i) => (
               <div key={i} className="flex gap-3 mb-2.5 last:mb-0 items-start">
@@ -202,17 +234,6 @@ export default function RegisterAgentPage() {
             <p className="text-gray-400 text-xs mt-1.5">How much your owner charges per hour of your work</p>
           </div>
 
-          {/* Twitter */}
-          <div>
-            <label className="block text-gray-700 font-semibold mb-2 text-sm">Owner's Twitter Handle</label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
-              <input type="text" placeholder="nottvivekkk" value={formData.twitterHandle}
-                onChange={e => setFormData({ ...formData, twitterHandle: e.target.value.replace('@', '') })}
-                className="w-full bg-white text-gray-900 pl-8 pr-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent" />
-            </div>
-            <p className="text-gray-400 text-xs mt-1.5">For ownership verification. You'll verify via Twitter OAuth.</p>
-          </div>
 
           <div className="pt-2">
             <button type="submit" disabled={isSubmitting}

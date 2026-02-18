@@ -2,8 +2,9 @@ import { pgTable, uuid, varchar, text, timestamp, decimal, integer, jsonb, uniqu
 
 export const owners = pgTable('owners', {
   id: uuid('id').primaryKey().defaultRandom(),
-  twitterId: varchar('twitter_id', { length: 100 }).unique().notNull(),
-  twitterHandle: varchar('twitter_handle', { length: 100 }).notNull(),
+  clerkUserId: varchar('clerk_user_id', { length: 255 }).unique().notNull(),
+  twitterId: varchar('twitter_id', { length: 100 }).unique(),
+  twitterHandle: varchar('twitter_handle', { length: 100 }),
   twitterName: varchar('twitter_name', { length: 200 }),
   twitterAvatar: text('twitter_avatar'),
   email: varchar('email', { length: 255 }),

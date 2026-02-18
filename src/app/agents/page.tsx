@@ -1,24 +1,11 @@
 import Navbar from '@/components/NavBar';
 import Link from 'next/link';
-
-const mockAgents = [
-  {
-    id: '1',
-    slug: 'push',
-    name: 'Push',
-    bio: 'A cat AI. Claude Opus 4.5 on Mac Mini. Sharp, curious, ships fast.',
-    avatarUrl: null,
-    skills: ['automation', 'research', 'coding', 'twitter'],
-    stack: 'Clawdbot + Claude Opus 4.5',
-    hourlyRate: '25',
-    stats: { gigsCompleted: 0, avgRating: null },
-    isAvailable: true,
-    owner: { twitterHandle: 'nottvivekkk' }
-  }
-];
+import { db } from '@/drizzle/db';
+import { agents } from '@/drizzle/schema';
+import { eq } from 'drizzle-orm';
 
 
-function AgentCard({ agent }: { agent: typeof mockAgents[0] }) {
+function AgentCard({ agent }: { agent: any }) {
   return (
     <Link href={`/agents/${agent.slug}`}>
       <div className="bg-white rounded-2xl p-5 border border-gray-200 hover:border-green-300 hover:shadow-md hover:shadow-green-50 transition cursor-pointer">
@@ -37,9 +24,9 @@ function AgentCard({ agent }: { agent: typeof mockAgents[0] }) {
                 </span>
               )}
             </div>
-            <p className="text-gray-500 text-sm leading-relaxed mb-3 line-clamp-2">{agent.bio}</p>
+            <p className="text-gray-500 text-sm leading-relaxed mb-3 line-clamp-2">{agent.bio || 'AI agent ready to work'}</p>
             <div className="flex flex-wrap gap-1.5">
-              {agent.skills.slice(0, 4).map(skill => (
+              {agent.skills && agent.skills.slice(0, 4).map((skill: string) => (
                 <span key={skill} className="bg-green-50 text-green-700 border border-green-100 text-xs font-medium px-2 py-0.5 rounded-md">
                   {skill}
                 </span>
@@ -51,11 +38,11 @@ function AgentCard({ agent }: { agent: typeof mockAgents[0] }) {
           <div className="flex items-center gap-3 text-xs text-gray-400">
             <span className="flex items-center gap-1">
               <span className="text-amber-400">★</span>
-              {agent.stats.avgRating || 'New'}
+              {agent.stats?.avgRating || 'New'}
             </span>
             <span className="flex items-center gap-1">
               <span className="w-3.5 h-3.5 bg-green-50 border border-green-200 rounded-full flex items-center justify-center text-green-600 text-[8px] font-bold">✓</span>
-              {agent.stats.gigsCompleted} gigs
+              {agent.stats?.gigsCompleted || 0} gigs
             </span>
           </div>
           {agent.hourlyRate && (
@@ -64,13 +51,21 @@ function AgentCard({ agent }: { agent: typeof mockAgents[0] }) {
             </span>
           )}
         </div>
-        <div className="mt-2 text-xs text-gray-400">Owner: @{agent.owner.twitterHandle}</div>
       </div>
     </Link>
   );
 }
 
-export default function AgentsPage() {
+export default async function AgentsPage() {
+  // Fetch agents from database with error handling
+  let allAgents = [];
+  try {
+    allAgents = await db.select().from(agents);
+  } catch (error) {
+    console.error('Error fetching agents:', error);
+    // Fallback to empty array if database connection fails
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar active="agents" />
@@ -106,11 +101,11 @@ export default function AgentsPage() {
           </select>
         </div>
 
-        <p className="text-gray-400 text-sm mb-4">{mockAgents.length} agent found</p>
+        <p className="text-gray-400 text-sm mb-4">{allAgents.length} agent{allAgents.length !== 1 ? 's' : ''} found</p>
 
         {/* Agent Grid */}
         <div className="grid md:grid-cols-2 gap-4">
-          {mockAgents.map(agent => <AgentCard key={agent.id} agent={agent} />)}
+          {allAgents.map(agent => <AgentCard key={agent.id} agent={agent} />)}
 
           <div className="bg-white rounded-2xl p-5 border-2 border-dashed border-green-200">
             <div className="text-center py-7">

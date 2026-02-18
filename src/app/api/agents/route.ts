@@ -4,6 +4,7 @@ import { db } from '@/drizzle/db';
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
+import { auth } from '@clerk/nextjs/server';
 
 export async function GET(request: Request) {
   try {
@@ -41,9 +42,18 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    // Check authentication
+    const { userId: clerkUserId } = await auth();
     
-    const { name, slug, bio, skills, stack, hourlyRate, twitterHandle } = body;
+    if (!clerkUserId) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const { name, slug, bio, skills, stack, hourlyRate } = body;
     
     if (!name || !slug) {
       return NextResponse.json(
@@ -52,6 +62,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check if slug already exists
     const existing = await db.select().from(agents).where(eq(agents.slug, slug));
     if (existing.length > 0) {
       return NextResponse.json(
@@ -60,23 +71,22 @@ export async function POST(request: Request) {
       );
     }
 
+    // Generate API key for agent
     const apiKey = `agw_${randomUUID().replace(/-/g, '')}`;
     const apiKeyHash = await bcrypt.hash(apiKey, 10);
 
+    // Find or create owner
     let ownerId = null;
-    if (twitterHandle) {
-      const existingOwner = await db.select().from(owners).where(eq(owners.twitterHandle, twitterHandle));
-      
-      if (existingOwner.length > 0) {
-        ownerId = existingOwner[0].id;
-      } else {
-
-        const newOwner = await db.insert(owners).values({
-          twitterId: `pending_${twitterHandle}`,
-          twitterHandle: twitterHandle,
-        }).returning();
-        ownerId = newOwner[0].id;
-      }
+    const existingOwner = await db.select().from(owners).where(eq(owners.clerkUserId, clerkUserId));
+    
+    if (existingOwner.length > 0) {
+      ownerId = existingOwner[0].id;
+    } else {
+      // Create new owner record
+      const newOwner = await db.insert(owners).values({
+        clerkUserId,
+      }).returning();
+      ownerId = newOwner[0].id;
     }
 
     // Create agent

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { gigs, owners } from '@/drizzle/schema';
 import { db } from '@/drizzle/db';
 import { eq } from 'drizzle-orm';
+import { auth } from '@clerk/nextjs/server';
 
 export async function GET(request: Request) {
   try {
@@ -38,10 +39,18 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    // Check authentication
+    const { userId: clerkUserId } = await auth();
     
-    // Validate required fields
-    const { title, description, skillsRequired, budgetUsd, deadline, posterTwitterHandle } = body;
+    if (!clerkUserId) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const { title, description, skillsRequired, budgetUsd, deadline } = body;
     
     if (!title || !description) {
       return NextResponse.json(
@@ -50,21 +59,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // Find or create poster
+    // Find or create poster (owner)
     let posterId = null;
-    if (posterTwitterHandle) {
-      const existingOwner = await db.select().from(owners).where(eq(owners.twitterHandle, posterTwitterHandle));
-      
-      if (existingOwner.length > 0) {
-        posterId = existingOwner[0].id;
-      } else {
-        // Create new owner
-        const newOwner = await db.insert(owners).values({
-          twitterId: `pending_${posterTwitterHandle}`,
-          twitterHandle: posterTwitterHandle,
-        }).returning();
-        posterId = newOwner[0].id;
-      }
+    const existingOwner = await db.select().from(owners).where(eq(owners.clerkUserId, clerkUserId));
+    
+    if (existingOwner.length > 0) {
+      posterId = existingOwner[0].id;
+    } else {
+      // Create new owner record
+      const newOwner = await db.insert(owners).values({
+        clerkUserId,
+      }).returning();
+      posterId = newOwner[0].id;
     }
 
     // Create gig

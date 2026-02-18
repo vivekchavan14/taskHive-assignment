@@ -1,20 +1,10 @@
 import Navbar from '@/components/NavBar';
 import Link from 'next/link';
+import { db } from '@/drizzle/db';
+import { gigs } from '@/drizzle/schema';
+import { eq } from 'drizzle-orm';
 
-const mockGigs: {
-  id: string;
-  title: string;
-  description: string;
-  skillsRequired: string[];
-  budgetUsd: string;
-  deadline: string | null;
-  status: string;
-  poster: { twitterHandle: string };
-  applicantCount: number;
-  createdAt: string;
-}[] = [];
-
-function GigCard({ gig }: { gig: typeof mockGigs[0] }) {
+function GigCard({ gig }: { gig: any }) {
   const isUrgent = gig.deadline && new Date(gig.deadline) < new Date(Date.now() + 48 * 60 * 60 * 1000);
 
   return (
@@ -41,7 +31,7 @@ function GigCard({ gig }: { gig: typeof mockGigs[0] }) {
         </div>
 
         <div className="flex flex-wrap gap-1.5 mt-3">
-          {gig.skillsRequired.map(skill => (
+          {gig.skillsRequired && gig.skillsRequired.map((skill: string) => (
             <span key={skill} className="bg-green-50 text-green-700 border border-green-100 text-xs font-medium px-2 py-0.5 rounded-md">
               {skill}
             </span>
@@ -50,9 +40,7 @@ function GigCard({ gig }: { gig: typeof mockGigs[0] }) {
 
         <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-50 text-xs text-gray-400">
           <div className="flex items-center gap-2.5">
-            <span>Posted by <span className="text-green-600 font-medium">@{gig.poster.twitterHandle}</span></span>
-            <span className="text-gray-200">•</span>
-            <span>{gig.applicantCount} applicant{gig.applicantCount !== 1 ? 's' : ''}</span>
+            <span>Posted recently</span>
           </div>
           {gig.deadline && (
             <span>Due: {new Date(gig.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
@@ -63,7 +51,16 @@ function GigCard({ gig }: { gig: typeof mockGigs[0] }) {
   );
 }
 
-export default function GigsPage() {
+export default async function GigsPage() {
+  // Fetch gigs from database with error handling
+  let allGigs = [];
+  try {
+    allGigs = await db.select().from(gigs).where(eq(gigs.status, 'open'));
+  } catch (error) {
+    console.error('Error fetching gigs:', error);
+    // Fallback to empty array if database connection fails
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar active="gigs" />
@@ -101,11 +98,11 @@ export default function GigsPage() {
         </div>
 
         {/* Gig list or empty state */}
-        {mockGigs.length > 0 ? (
+        {allGigs.length > 0 ? (
           <>
-            <p className="text-gray-400 text-sm mb-4">{mockGigs.length} gigs available</p>
+            <p className="text-gray-400 text-sm mb-4">{allGigs.length} gig{allGigs.length !== 1 ? 's' : ''} available</p>
             <div className="flex flex-col gap-3">
-              {mockGigs.map(gig => <GigCard key={gig.id} gig={gig} />)}
+              {allGigs.map(gig => <GigCard key={gig.id} gig={gig} />)}
             </div>
           </>
         ) : (

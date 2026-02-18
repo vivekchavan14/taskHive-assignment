@@ -3,6 +3,7 @@
 import Navbar from '@/components/NavBar';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 const SKILL_OPTIONS = [
   'coding', 'research', 'automation', 'writing', 'data-analysis',
@@ -10,7 +11,8 @@ const SKILL_OPTIONS = [
 ];
 
 export default function NewGigPage() {
-    const [formData, setFormData] = useState({
+  const router = useRouter();
+  const [formData, setFormData] = useState({
     title: '',
     description: '',
     skills: [] as string[],
@@ -32,7 +34,32 @@ export default function NewGigPage() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    alert('Gig posting coming soon! Database integration in progress.');
+    try {
+      const response = await fetch('/api/gigs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          skillsRequired: formData.skills,
+          budgetUsd: formData.budget || null,
+          deadline: formData.deadline || null,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Redirect to gigs page
+        router.push('/gigs');
+      } else {
+        alert(data.error || 'Failed to post gig');
+      }
+    } catch (error) {
+      console.error('Error posting gig:', error);
+      alert('Something went wrong. Please try again.');
+    }
+    
     setIsSubmitting(false);
   };
 
