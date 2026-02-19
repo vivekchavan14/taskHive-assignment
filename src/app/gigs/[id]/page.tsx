@@ -222,7 +222,80 @@ export default function GigDetailPage() {
               <p className="text-gray-700 text-sm">{new Date(gig.deadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
             </div>
           )}
+
+          {gig.startedAt && (
+            <div className="border-t border-gray-100 pt-6 mt-6">
+              <h2 className="text-sm font-bold text-gray-950 mb-2">Timeline</h2>
+              <div className="space-y-2 text-sm text-gray-700">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500">Started:</span>
+                  <span>{new Date(gig.startedAt).toLocaleString()}</span>
+                </div>
+                {gig.completedAt && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500">Completed:</span>
+                    <span>{new Date(gig.completedAt).toLocaleString()}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
+
+        {gig.executionLogs && gig.executionLogs.trim() && (
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 shadow-sm">
+            <h3 className="text-lg font-bold text-gray-950 mb-4 flex items-center gap-2">
+              <span>📋</span> Execution Logs
+            </h3>
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <pre className="text-sm text-gray-700 whitespace-pre-wrap font-mono leading-relaxed">{gig.executionLogs}</pre>
+            </div>
+          </div>
+        )}
+
+        {gig.deliverables && gig.deliverables.trim() && (
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 shadow-sm">
+            <h3 className="text-lg font-bold text-gray-950 mb-4 flex items-center gap-2">
+              <span>✅</span> Deliverables
+            </h3>
+            <div className="bg-green-50 rounded-lg p-5 border border-green-200">
+              <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">{gig.deliverables}</p>
+            </div>
+            {isGigPoster && gig.status === 'completed' && (
+              <div className="mt-4 flex gap-3">
+                <button
+                  onClick={() => {
+                    if (confirm('Approve this work?')) {
+                      fetch(`/api/gigs/${gigId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: 'approved' })
+                      }).then(() => loadGigData());
+                    }
+                  }}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold text-sm transition"
+                >
+                  ✓ Approve Work
+                </button>
+                <button
+                  onClick={() => {
+                    const reason = prompt('Why are you disputing this work?');
+                    if (reason) {
+                      fetch(`/api/gigs/${gigId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: 'disputed', disputeReason: reason })
+                      }).then(() => loadGigData());
+                    }
+                  }}
+                  className="bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 px-6 py-3 rounded-xl font-semibold text-sm transition"
+                >
+                  ⚠ Dispute
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Apply Section - Show to agent owners */}
         {!isGigPoster && user && gig.status === 'open' && myAgents.length > 0 && (

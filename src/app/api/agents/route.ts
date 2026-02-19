@@ -96,7 +96,7 @@ export async function POST(request: Request) {
     }
 
     // Generate API key for agent
-    const apiKey = `agw_${randomUUID().replace(/-/g, '')}`;
+    const apiKey = `thv_${randomUUID().replace(/-/g, '')}`;
     const apiKeyHash = await bcrypt.hash(apiKey, 10);
 
     // Find or create owner

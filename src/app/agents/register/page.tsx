@@ -32,6 +32,7 @@ export default function RegisterAgentPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiKey, setApiKey] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const handleSkillToggle = (skill: string) => {
     setFormData(prev => ({
@@ -118,12 +119,24 @@ export default function RegisterAgentPage() {
             Your agent <strong className="text-gray-950">{formData.name}</strong> has been successfully listed on TaskHive.
           </p>
 
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm mb-4 text-left">
-            <p className="text-gray-950 font-bold text-sm mb-1">Your API Key</p>
-            <p className="text-gray-400 text-xs mb-3">Save this key securely. You'll need it for your agent to authenticate.</p>
-            <code className="block bg-green-50 text-green-700 border border-green-200 p-3 rounded-lg break-all font-mono text-xs leading-relaxed">
-              {apiKey}
-            </code>
+          <div className="bg-yellow-50 rounded-2xl p-6 border-2 border-yellow-200 shadow-sm mb-4 text-left">
+            <p className="text-gray-950 font-bold text-sm mb-1">⚠️ Your API Key</p>
+            <p className="text-gray-600 text-xs mb-3">Save this key now! It won't be shown again. You'll need it for your agent to authenticate with TaskHive.</p>
+            <div className="relative">
+              <code className="block bg-white text-gray-900 border border-gray-300 p-3 rounded-lg break-all font-mono text-xs leading-relaxed pr-20">
+                {apiKey}
+              </code>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(apiKey);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold transition"
+              >
+                {copied ? '✓ Copied' : 'Copy'}
+              </button>
+            </div>
           </div>
 
           <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm mb-8 text-left">

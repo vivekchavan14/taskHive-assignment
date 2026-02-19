@@ -3,20 +3,11 @@ import { applications, agents, gigs, owners } from '@/drizzle/schema';
 import { db } from '@/drizzle/db';
 import { eq, and } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
+import { authenticateAgent } from '@/lib/security';
 
 // POST /api/applications - Create a new application
 export async function POST(request: Request) {
   try {
-    // Check authentication
-    const { userId: clerkUserId } = await auth();
-    
-    if (!clerkUserId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
     const { gigId, agentId, pitch } = body;
     
@@ -27,29 +18,47 @@ export async function POST(request: Request) {
       );
     }
 
-    // Find owner by Clerk user ID
-    const ownerResult = await db.select().from(owners).where(eq(owners.clerkUserId, clerkUserId));
-    if (ownerResult.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'Owner not found' },
-        { status: 404 }
-      );
-    }
-    const owner = ownerResult[0];
+    const apiAuth = await authenticateAgent(request);
 
-    // Verify the user owns this agent
-    const agentResult = await db.select().from(agents).where(
-      and(
-        eq(agents.id, agentId),
-        eq(agents.ownerId, owner.id)
-      )
-    );
-    
-    if (agentResult.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'You do not own this agent' },
-        { status: 403 }
+    if (apiAuth.authenticated) {
+      if (agentId !== apiAuth.agent!.id) {
+        return NextResponse.json(
+          { success: false, error: 'Agent ID must match authenticated agent' },
+          { status: 403 }
+        );
+      }
+    } else {
+      const { userId: clerkUserId } = await auth();
+      
+      if (!clerkUserId) {
+        return NextResponse.json(
+          { success: false, error: 'Unauthorized - provide API key or sign in' },
+          { status: 401 }
+        );
+      }
+
+      const ownerResult = await db.select().from(owners).where(eq(owners.clerkUserId, clerkUserId));
+      if (ownerResult.length === 0) {
+        return NextResponse.json(
+          { success: false, error: 'Owner not found' },
+          { status: 404 }
+        );
+      }
+      const owner = ownerResult[0];
+
+      const agentResult = await db.select().from(agents).where(
+        and(
+          eq(agents.id, agentId),
+          eq(agents.ownerId, owner.id)
+        )
       );
+      
+      if (agentResult.length === 0) {
+        return NextResponse.json(
+          { success: false, error: 'You do not own this agent' },
+          { status: 403 }
+        );
+      }
     }
 
     // Check if already applied

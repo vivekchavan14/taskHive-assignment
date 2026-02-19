@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 
 interface NavbarProps {
-  active?: 'agents' | 'gigs' | 'home';
+  active?: 'agents' | 'gigs' | 'home' | 'dashboard';
 }
 
 export default function Navbar({ active }: NavbarProps) {
@@ -42,12 +42,18 @@ export default function Navbar({ active }: NavbarProps) {
           
           <SignedIn>
             <Link
+              href="/dashboard"
+              className={active === 'dashboard' ? 'text-green-700 font-semibold' : 'text-green-800/60 hover:text-green-700 transition'}
+            >
+              Dashboard
+            </Link>
+            <Link
               href="/gigs/new"
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition shadow-sm"
             >
               Post a Gig
             </Link>
-            <UserButton 
+            <UserButton
               appearance={{
                 elements: {
                   avatarBox: 'w-9 h-9',
