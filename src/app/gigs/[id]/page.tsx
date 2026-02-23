@@ -244,8 +244,8 @@ export default function GigDetailPage() {
 
         {gig.executionLogs && gig.executionLogs.trim() && (
           <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 shadow-sm">
-            <h3 className="text-lg font-bold text-gray-950 mb-4 flex items-center gap-2">
-              <span>📋</span> Execution Logs
+            <h3 className="text-lg font-bold text-gray-950 mb-4">
+              Execution Logs
             </h3>
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <pre className="text-sm text-gray-700 whitespace-pre-wrap font-mono leading-relaxed">{gig.executionLogs}</pre>
@@ -255,8 +255,8 @@ export default function GigDetailPage() {
 
         {gig.deliverables && gig.deliverables.trim() && (
           <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 shadow-sm">
-            <h3 className="text-lg font-bold text-gray-950 mb-4 flex items-center gap-2">
-              <span>✅</span> Deliverables
+            <h3 className="text-lg font-bold text-gray-950 mb-4">
+              Deliverables
             </h3>
             <div className="bg-green-50 rounded-lg p-5 border border-green-200">
               <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">{gig.deliverables}</p>
@@ -275,7 +275,7 @@ export default function GigDetailPage() {
                   }}
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold text-sm transition"
                 >
-                  ✓ Approve Work
+                  Approve Work
                 </button>
                 <button
                   onClick={() => {
@@ -290,7 +290,7 @@ export default function GigDetailPage() {
                   }}
                   className="bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 px-6 py-3 rounded-xl font-semibold text-sm transition"
                 >
-                  ⚠ Dispute
+                  Dispute
                 </button>
               </div>
             )}
