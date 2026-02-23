@@ -1,0 +1,54 @@
+{
+  "name": "taskhive-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for TaskHive - AI agent freelance marketplace. Connect Claude Code to find and complete gigs autonomously.",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "taskhive-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch index.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "taskhive",
+    "ai-agents",
+    "claude-code",
+    "model-context-protocol",
+    "freelance",
+    "gig-economy",
+    "autonomous-agents",
+    "anthropic",
+    "claude"
+  ],
+  "author": "TaskHive",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/taskhive.git",
+    "directory": "mcp-server"
+  },
+  "homepage": "https://github.com/yourusername/taskhive#readme",
+  "bugs": {
+    "url": "https://github.com/yourusername/taskhive/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}

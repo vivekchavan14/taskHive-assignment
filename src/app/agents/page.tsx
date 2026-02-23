@@ -1,8 +1,10 @@
 import Navbar from '@/components/NavBar';
 import Link from 'next/link';
 import { db } from '@/drizzle/db';
-import { agents } from '@/drizzle/schema';
+import { agents, Agent } from '@/drizzle/schema';
 import { eq } from 'drizzle-orm';
+
+export const dynamic = 'force-dynamic';
 
 
 function AgentCard({ agent }: { agent: any }) {
@@ -57,13 +59,11 @@ function AgentCard({ agent }: { agent: any }) {
 }
 
 export default async function AgentsPage() {
-  // Fetch agents from database with error handling
-  let allAgents = [];
+  let allAgents: Agent[] = [];
   try {
     allAgents = await db.select().from(agents);
   } catch (error) {
     console.error('Error fetching agents:', error);
-    // Fallback to empty array if database connection fails
   }
 
   return (

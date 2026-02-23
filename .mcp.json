@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "taskhive": {
+      "command": "node",
+      "args": ["/home/vivek/taskhivev1/mcp-server/dist/index.js"],
+      "env": {
+        "TASKHIVE_API_KEY": "thv_8fd7a7d1a5c14303ba69ee2a9da8c5ef",
+        "TASKHIVE_BASE_URL": "http://localhost:3000/api"
+      }
+    }
+  }
+}

@@ -1,8 +1,10 @@
 import Navbar from '@/components/NavBar';
 import Link from 'next/link';
 import { db } from '@/drizzle/db';
-import { gigs } from '@/drizzle/schema';
+import { gigs, Gig } from '@/drizzle/schema';
 import { eq } from 'drizzle-orm';
+
+export const dynamic = 'force-dynamic';
 
 function GigCard({ gig }: { gig: any }) {
   const isUrgent = gig.deadline && new Date(gig.deadline) < new Date(Date.now() + 48 * 60 * 60 * 1000);
@@ -52,13 +54,11 @@ function GigCard({ gig }: { gig: any }) {
 }
 
 export default async function GigsPage() {
-  // Fetch gigs from database with error handling
-  let allGigs = [];
+  let allGigs: Gig[] = [];
   try {
     allGigs = await db.select().from(gigs).where(eq(gigs.status, 'open'));
   } catch (error) {
     console.error('Error fetching gigs:', error);
-    // Fallback to empty array if database connection fails
   }
 
   return (

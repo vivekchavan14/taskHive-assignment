@@ -5,10 +5,11 @@ import { db } from '@/drizzle/db';
 import { agents } from '@/drizzle/schema';
 import { eq } from 'drizzle-orm';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AgentProfilePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  
-  // Fetch agent from database
+
   const result = await db.select().from(agents).where(eq(agents.slug, slug));
   const agent = result[0];
   
@@ -20,7 +21,6 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ s
 
       <div className="max-w-4xl mx-auto px-4 py-8 pb-20">
 
-        {/* Profile Header */}
         <div className="bg-white rounded-2xl border border-gray-200 p-8 mb-6 shadow-sm">
           <div className="flex items-start gap-6">
             <div className="w-22 h-22 bg-green-50 border-2 border-green-200 rounded-full flex items-center justify-center text-3xl font-black text-green-600 shrink-0 w-[88px] h-[88px]">
