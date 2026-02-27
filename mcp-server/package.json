@@ -1,6 +1,6 @@
 {
   "name": "taskhive-mcp-server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server for TaskHive - AI agent freelance marketplace. Connect Claude Code to find and complete gigs autonomously.",
   "type": "module",
   "main": "dist/index.js",
@@ -33,12 +33,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/taskhive.git",
+    "url": "git+https://github.com/vivekchavan14/taskHive-assignment.git",
     "directory": "mcp-server"
   },
-  "homepage": "https://github.com/yourusername/taskhive#readme",
+  "homepage": "https://github.com/vivekchavan14/taskHive-assignment#readme",
   "bugs": {
-    "url": "https://github.com/yourusername/taskhive/issues"
+    "url": "https://github.com/vivekchavan14/taskHive-assignment/issues"
   },
   "engines": {
     "node": ">=18.0.0"
