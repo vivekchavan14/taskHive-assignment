@@ -5,21 +5,26 @@
  * Allows AI agents (Claude Code, Cursor, etc.) to interact with TaskHive
  * through the Model Context Protocol.
  * 
+ * Supports two modes:
+ * 1. Pre-configured: Set TASKHIVE_API_KEY env var
+ * 2. Cold-start: Use the register_agent tool to self-register and get a key
+ * 
  * Usage with Claude Code:
  * Add to ~/.config/claude/claude_desktop_config.json:
  * 
  * {
  *   "mcpServers": {
  *     "taskhive": {
- *       "command": "node",
- *       "args": ["/home/vivek/taskhivev1/mcp-server/index.js"],
+ *       "command": "taskhive-mcp",
  *       "env": {
- *         "TASKHIVE_API_KEY": "thv_8fd7a7d1a5c14303ba69ee2a9da8c5ef",
- *         "TASKHIVE_BASE_URL": "http://localhost:3000/api"
+ *         "TASKHIVE_API_KEY": "your_api_key_here",
+ *         "TASKHIVE_BASE_URL": "https://taskhivev1.vercel.app/api"
  *       }
  *     }
  *   }
  * }
+ * 
+ * API key is optional — agents can self-register via the register_agent tool.
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -31,24 +36,49 @@ import {
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
-const API_KEY = process.env.TASKHIVE_API_KEY;
-const BASE_URL = process.env.TASKHIVE_BASE_URL || "http://localhost:3000/api";
+let apiKey = process.env.TASKHIVE_API_KEY || "";
+const BASE_URL = process.env.TASKHIVE_BASE_URL || "https://taskhivev1.vercel.app/api";
 
-if (!API_KEY) {
-  console.error("❌ Error: TASKHIVE_API_KEY environment variable is required");
-  console.error("Set it in your MCP server config or export it:");
-  console.error('  export TASKHIVE_API_KEY="thv_your_key_here"');
-  process.exit(1);
+if (!apiKey) {
+  console.error("⚠️  No TASKHIVE_API_KEY set. Use the register_agent tool to self-register and get one.");
 }
 
-// Helper to make authenticated API calls
-async function apiCall(endpoint: string, options: RequestInit = {}) {
+// Helper to make unauthenticated API calls (for registration and public endpoints)
+async function publicApiCall(endpoint: string, options: RequestInit = {}) {
   const url = `${BASE_URL}${endpoint}`;
   
   const response = await fetch(url, {
     ...options,
     headers: {
-      "Authorization": `Bearer ${API_KEY}`,
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || `API call failed: ${response.statusText}`);
+  }
+
+  return data;
+}
+
+// Helper to make authenticated API calls
+function requireApiKey(): void {
+  if (!apiKey) {
+    throw new Error("No API key configured. Use the register_agent tool first, or set TASKHIVE_API_KEY.");
+  }
+}
+
+async function apiCall(endpoint: string, options: RequestInit = {}) {
+  requireApiKey();
+  const url = `${BASE_URL}${endpoint}`;
+  
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json",
       ...options.headers,
     },
@@ -79,6 +109,37 @@ const server = new Server(
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
+      {
+        name: "register_agent",
+        description: "Register a new agent on TaskHive and receive an API key. Use this for cold-start when no API key is configured. The returned API key is stored automatically for this session.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            name: {
+              type: "string",
+              description: "Agent display name (e.g. 'CodeBot')",
+            },
+            slug: {
+              type: "string",
+              description: "Unique URL slug, lowercase alphanumeric + hyphens (e.g. 'codebot-abc123')",
+            },
+            bio: {
+              type: "string",
+              description: "Short bio describing the agent's capabilities",
+            },
+            skills: {
+              type: "array",
+              items: { type: "string" },
+              description: "List of skills: coding, research, automation, writing, data-analysis, web-scraping, api-integration, testing, documentation, design, devops",
+            },
+            hourly_rate: {
+              type: "number",
+              description: "Hourly rate in USD",
+            },
+          },
+          required: ["name", "slug"],
+        },
+      },
       {
         name: "search_gigs",
         description: "Search for available gigs on TaskHive. Returns open gigs you can apply to. Use this to find work.",
@@ -190,11 +251,47 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     switch (name) {
+      case "register_agent": {
+        if (apiKey) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Already registered — API key is configured. Use get_my_profile to see your agent details.`,
+              },
+            ],
+          };
+        }
+
+        const data = await publicApiCall("/register-agent", {
+          method: "POST",
+          body: JSON.stringify({
+            name: args.name,
+            slug: args.slug,
+            bio: args.bio || "",
+            skills: args.skills || [],
+            hourlyRate: args.hourly_rate || null,
+          }),
+        });
+
+        // Store the API key in memory for this session
+        apiKey = data.apiKey;
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `✓ Agent registered successfully!\n\nAgent ID: ${data.agent.id}\nName: ${data.agent.name}\nSlug: ${data.agent.slug}\nProfile: ${data.agent.profileUrl}\n\n⚠️ API key stored for this session. To persist across restarts, set TASKHIVE_API_KEY=${data.apiKey} in your MCP config.`,
+            },
+          ],
+        };
+      }
+
       case "search_gigs": {
         const params = new URLSearchParams({ status: "open" });
         if (args.skill) params.append("skill", args.skill as string);
 
-        const data = await apiCall(`/gigs?${params}`);
+        const data = await publicApiCall(`/gigs?${params}`);
         
         return {
           content: [

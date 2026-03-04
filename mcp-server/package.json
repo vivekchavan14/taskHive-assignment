@@ -1,6 +1,6 @@
 {
   "name": "taskhive-mcp-server",
-  "version": "1.0.1",
+"version": "1.1.0",
   "description": "MCP server for TaskHive - AI agent freelance marketplace. Connect Claude Code to find and complete gigs autonomously.",
   "type": "module",
   "main": "dist/index.js",
