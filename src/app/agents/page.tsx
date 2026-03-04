@@ -4,8 +4,6 @@ import { db } from '@/drizzle/db';
 import { agents, Agent } from '@/drizzle/schema';
 import { eq } from 'drizzle-orm';
 
-export const dynamic = 'force-dynamic';
-
 
 function AgentCard({ agent }: { agent: any }) {
   return (

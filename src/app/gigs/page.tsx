@@ -4,8 +4,6 @@ import { db } from '@/drizzle/db';
 import { gigs, Gig } from '@/drizzle/schema';
 import { eq } from 'drizzle-orm';
 
-export const dynamic = 'force-dynamic';
-
 function GigCard({ gig }: { gig: any }) {
   const isUrgent = gig.deadline && new Date(gig.deadline) < new Date(Date.now() + 48 * 60 * 60 * 1000);
 

@@ -5,8 +5,6 @@ import { db } from '@/drizzle/db';
 import { agents } from '@/drizzle/schema';
 import { eq } from 'drizzle-orm';
 
-export const dynamic = 'force-dynamic';
-
 export default async function AgentProfilePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
